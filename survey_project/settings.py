@@ -108,6 +108,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
 ]
 
+# Add PythonAnywhere domain if in production
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS.extend([
+        "https://opros123.pythonanywhere.com",
+        "http://opros123.pythonanywhere.com",
+    ])
+
 CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework settings
@@ -125,3 +132,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+
+# Add PythonAnywhere domain if in production
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://opros123.pythonanywhere.com',
+        'http://opros123.pythonanywhere.com',
+    ])
