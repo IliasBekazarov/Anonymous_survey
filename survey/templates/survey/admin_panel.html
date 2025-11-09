@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #eef2ff, #f3e8ff);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div id="app" class="max-w-7xl mx-auto">
+        <!-- Страница входа -->
+        <div id="login-page" class="hidden">
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md mx-auto mt-20">
+                <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Панель администратора</h2>
+                
+                <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"></div>
+                
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Логин</label>
+                        <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Пароль</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300">
+                        Войти
+                    </button>
+                </form>
+                
+                <button onclick="window.location.href='/'" class="w-full mt-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors duration-300">
+                    Вернуться к опросу
+                </button>
+            </div>
+        </div>
+
+        <!-- Дашборд -->
+        <div id="dashboard" class="hidden">
+            <!-- Верхняя панель -->
+            <div class="bg-white rounded-lg shadow-xl p-4 mb-6 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Панель администратора</h1>
+                <button onclick="handleLogout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Выйти
+                </button>
+            </div>
+
+            <!-- Табы -->
+            <div class="bg-white rounded-lg shadow-xl mb-6">
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <button onclick="switchTab('ratings')" class="tab-button py-4 px-6 text-sm font-medium border-b-2 transition-colors duration-300 flex items-center gap-2" data-tab="ratings">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            Рейтинг преподавателей
+                        </button>
+                        <button onclick="switchTab('questions')" class="tab-button py-4 px-6 text-sm font-medium border-b-2 transition-colors duration-300 flex items-center gap-2" data-tab="questions">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            Управление вопросами
+                        </button>
+                        <button onclick="switchTab('results')" class="tab-button py-4 px-6 text-sm font-medium border-b-2 transition-colors duration-300 flex items-center gap-2" data-tab="results">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+                            Таблица результатов
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Вкладка: Рейтинг преподавателей -->
+                <div id="tab-ratings" class="tab-content p-6 hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Рейтинг преподавателей</h2>
+                    <p class="text-gray-600 mb-6">Средние оценки по всем вопросам</p>
+
+                    <div id="ratings-content"></div>
+                </div>
+
+                <!-- Вкладка: Управление вопросами -->
+                <div id="tab-questions" class="tab-content p-6 hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Управление вопросами</h2>
+                    <p class="text-gray-600 mb-6">Добавляйте, редактируйте или удаляйте вопросы опроса</p>
+
+                    <div id="questions-list" class="space-y-4 mb-6"></div>
+
+                    <!-- Форма добавления вопроса -->
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6">
+                        <h3 class="font-semibold text-gray-800 mb-4">Добавить новый вопрос</h3>
+                        <form onsubmit="addQuestion(event)">
+                            <textarea id="new-question-text" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4" placeholder="Введите текст вопроса..." required></textarea>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors duration-300">
+                                Добавить вопрос
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Вкладка: Таблица результатов -->
+                <div id="tab-results" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 mb-2">Таблица результатов</h2>
+                            <p class="text-gray-600">Детальная статистика по каждому преподавателю и вопросу</p>
+                        </div>
+                        <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Экспортировать в CSV
+                        </button>
+                    </div>
+
+                    <div id="results-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/admin.js' %}"></script>
+</body>
+</html>

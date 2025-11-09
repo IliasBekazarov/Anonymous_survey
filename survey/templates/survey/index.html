@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анонимный опрос студентов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div id="app" class="max-w-7xl mx-auto">
+        <!-- Страница опроса -->
+        <div id="survey-page" class="hidden">
+            <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-3xl font-bold text-gray-800">Анонимный опрос студентов</h1>
+                    {% comment %} <button onclick="goToAdminPanel()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        Статистика
+                    </button> {% endcomment %}
+                </div>
+                <p class="text-gray-600">Вопрос <span id="current-question-num">1</span> из <span id="total-questions">15</span></p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Всего ответов: <span id="total-responses">0</span></p>
+            </div>
+
+            <!-- Карточка вопроса -->
+            <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p id="question-text" class="text-xl font-semibold text-gray-800"></p>
+                </div>
+                <p class="text-gray-600 mb-4">Оцените каждого преподавателя по этому критерию (1 - очень плохо, 5 - отлично)</p>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <p class="text-sm text-gray-700">Оценено преподавателей: <span id="rated-teachers">0</span> из <span id="total-teachers">23</span></p>
+                </div>
+
+                <!-- Таблица оценок -->
+                <div class="overflow-x-auto">
+                    <table class="w-full" id="ratings-table">
+                        <thead>
+                            <tr id="teachers-header"></tr>
+                        </thead>
+                        <tbody>
+                            <tr id="ratings-row"></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Навигация -->
+            <div class="bg-white rounded-lg shadow-xl p-4 flex justify-between items-center">
+                <button id="prev-btn" onclick="previousQuestion()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Предыдущий вопрос
+                </button>
+                <span class="text-gray-600 font-semibold"><span id="nav-current">1</span> / <span id="nav-total">15</span></span>
+                <button id="next-btn" onclick="nextQuestion()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                    Следующий вопрос
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button id="submit-btn" onclick="submitSurvey()" class="hidden bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors duration-300 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Отправить ответы
+                </button>
+            </div>
+        </div>
+
+        <!-- Страница благодарности -->
+        <div id="thank-you-page" class="hidden">
+            <div class="bg-white rounded-lg shadow-xl p-12 text-center max-w-md mx-auto mt-20">
+                <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Спасибо!</h2>
+                <p class="text-gray-600 mb-6">Ваши ответы сохранены анонимно.</p>
+                <button onclick="resetSurvey()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors duration-300">
+                    Пройти опрос снова
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let teachers = [];
+        let questions = [];
+        let responses = {};
+        let currentQuestionIndex = 0;
+        let totalResponses = 0;
+        let browserFingerprint = '';
+        let canTakeSurvey = true;
+
+        // Генерация browser fingerprint
+        function generateFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Browser fingerprint', 2, 2);
+            
+            const fingerprint = {
+                screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                timezone: new Date().getTimezoneOffset(),
+                language: navigator.language,
+                platform: navigator.platform,
+                userAgent: navigator.userAgent,
+                canvas: canvas.toDataURL(),
+                plugins: Array.from(navigator.plugins || []).map(p => p.name).join(','),
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency || 0
+            };
+            
+            const fingerprintString = JSON.stringify(fingerprint);
+            
+            // Простой hash функция
+            let hash = 0;
+            for (let i = 0; i < fingerprintString.length; i++) {
+                const char = fingerprintString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            return Math.abs(hash).toString(16);
+        }
+
+        // Получение CSRF токена
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Проверка статуса сессии
+        async function checkSessionStatus() {
+            try {
+                browserFingerprint = generateFingerprint();
+                
+                const response = await fetch(`/api/session/check/?fingerprint=${browserFingerprint}`);
+                const data = await response.json();
+                
+                if (!data.can_take_survey) {
+                    // Студент уже прошел опрос
+                    showAlreadyCompletedMessage(data.message, data.completed_at);
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка проверки сессии:', error);
+                return true; // В случае ошибки разрешаем пройти
+            }
+        }
+
+        // Показать сообщение что уже прошел
+        function showAlreadyCompletedMessage(message, completedAt) {
+            const app = document.getElementById('app');
+            const date = completedAt ? new Date(completedAt).toLocaleString('ru-RU') : '';
+            
+            app.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl p-12 text-center max-w-md mx-auto mt-20">
+                    <div class="bg-yellow-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Тесттен өттүңүз</h2>
+                    <p class="text-gray-600 mb-4">${message}</p>
+                    ${date ? `<p class="text-sm text-gray-500">Өткөн убакты: ${date}</p>` : ''}
+                    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-gray-700">Бир жолу гана тесттен өтүүгө болот. Бул анонимдүүлүктү камсыз кылуу үчүн.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Загрузка данных
+        async function loadData() {
+            // Сначала проверяем сессию
+            const canTake = await checkSessionStatus();
+            if (!canTake) {
+                return; // Уже прошел опрос
+            }
+            
+            try {
+                const [teachersRes, questionsRes, countRes] = await Promise.all([
+                    fetch('/api/teachers/'),
+                    fetch('/api/questions/'),
+                    fetch('/api/responses/count/')
+                ]);
+
+                teachers = await teachersRes.json();
+                questions = await questionsRes.json();
+                const countData = await countRes.json();
+                totalResponses = countData.total;
+
+                document.getElementById('total-questions').textContent = questions.length;
+                document.getElementById('nav-total').textContent = questions.length;
+                document.getElementById('total-teachers').textContent = teachers.length;
+                document.getElementById('total-responses').textContent = totalResponses;
+
+                renderQuestion();
+                document.getElementById('survey-page').classList.remove('hidden');
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+
+        // Отображение вопроса
+        function renderQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('question-text').textContent = question.text;
+            document.getElementById('current-question-num').textContent = currentQuestionIndex + 1;
+            document.getElementById('nav-current').textContent = currentQuestionIndex + 1;
+
+            // Шапка таблицы
+            const headerRow = document.getElementById('teachers-header');
+            headerRow.innerHTML = teachers.map(teacher => 
+                `<th class="px-3 py-2 text-sm font-medium text-gray-700 border-r">${teacher.full_name}</th>`
+            ).join('');
+
+            // Строка с оценками
+            const ratingsRow = document.getElementById('ratings-row');
+            ratingsRow.innerHTML = teachers.map(teacher => 
+                `<td class="px-3 py-2 border-r">
+                    <div class="flex flex-col gap-1">
+                        ${[5, 4, 3, 2, 1].map(rating => `
+                            <button 
+                                onclick="selectRating(${teacher.id}, ${rating})"
+                                class="rating-btn w-12 h-10 rounded transition-all duration-300 ${
+                                    responses[question.id]?.[teacher.id] === rating 
+                                        ? 'bg-indigo-600 text-white scale-105' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                }"
+                                data-teacher="${teacher.id}"
+                                data-rating="${rating}"
+                            >
+                                ${rating}
+                            </button>
+                        `).join('')}
+                    </div>
+                </td>`
+            ).join('');
+
+            updateProgress();
+            updateNavButtons();
+        }
+
+        // Выбор оценки
+        function selectRating(teacherId, rating) {
+            const question = questions[currentQuestionIndex];
+            if (!responses[question.id]) {
+                responses[question.id] = {};
+            }
+            responses[question.id][teacherId] = rating;
+            renderQuestion();
+        }
+
+        // Обновление прогресса
+        function updateProgress() {
+            const question = questions[currentQuestionIndex];
+            const rated = responses[question.id] ? Object.keys(responses[question.id]).length : 0;
+            document.getElementById('rated-teachers').textContent = rated;
+
+            const totalAnswered = Object.keys(responses).reduce((sum, qId) => {
+                return sum + (responses[qId] ? Object.keys(responses[qId]).length : 0);
+            }, 0);
+            const totalPossible = questions.length * teachers.length;
+            const progress = (totalAnswered / totalPossible) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+        }
+
+        // Обновление кнопок навигации
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        // Навигация
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            }
+        }
+
+        // Отправка опроса
+        async function submitSurvey() {
+            const responsesArray = [];
+            
+            for (const questionId in responses) {
+                for (const teacherId in responses[questionId]) {
+                    responsesArray.push({
+                        question: parseInt(questionId),
+                        teacher: parseInt(teacherId),
+                        rating: responses[questionId][teacherId]
+                    });
+                }
+            }
+
+            if (responsesArray.length === 0) {
+                alert('Жок дегенде бир мугалимди баалаңыз');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/responses/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ 
+                        responses: responsesArray,
+                        fingerprint: browserFingerprint
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('survey-page').classList.add('hidden');
+                    document.getElementById('thank-you-page').classList.remove('hidden');
+                } else {
+                    // Показываем ошибку если уже прошел
+                    alert(data.error || 'Ошибка при отправке ответов');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                alert('Ошибка при отправке ответов');
+            }
+        }
+
+        // Сброс опроса
+        function resetSurvey() {
+            responses = {};
+            currentQuestionIndex = 0;
+            document.getElementById('thank-you-page').classList.add('hidden');
+            loadData();
+        }
+
+        // Переход в админ-панель
+        function goToAdminPanel() {
+            window.location.href = '/admin-panel/';
+        }
+
+        // Инициализация
+        loadData();
+    </script>
+</body>
+</html>
